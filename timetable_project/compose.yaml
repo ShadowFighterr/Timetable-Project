@@ -1,0 +1,13 @@
+services:
+  timetable:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      TIMETABLE_DB: /app/instance/timetable.sqlite3
+    volumes:
+      - timetable_data:/app/instance
+    restart: unless-stopped
+
+volumes:
+  timetable_data:

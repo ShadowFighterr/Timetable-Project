@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campus Scheduler</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/">Campus<span>Scheduler</span></a>
+    <p class="eyebrow">LOCAL WORKSPACE</p>
+    <nav>
+      <button class="nav-item active" data-view="dashboard">Overview</button>
+      <button class="nav-item" data-view="academic">Academic data</button>
+      <button class="nav-item" data-view="schedule">Schedule</button>
+      <button class="nav-item" data-view="imports">Imports</button>
+    </nav>
+    <div class="sidebar-note">
+      <span class="status-dot"></span>
+      <span>Local database</span>
+      <small>No account required</small>
+    </div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">UNIVERSITY OPERATIONS</p>
+        <h1 id="page-title">Overview</h1>
+      </div>
+      <div id="api-status" class="pill">Connecting…</div>
+    </header>
+
+    <section class="view" id="view-dashboard">
+      <div class="welcome card">
+        <div>
+          <p class="eyebrow">TIMETABLE WORKSPACE</p>
+          <h2>Plan a schedule you can verify.</h2>
+          <p>Manage course data, generate a draft, inspect hard-rule validation, then export it.</p>
+        </div>
+        <button class="primary" data-go="schedule">Generate a schedule <span aria-hidden="true">→</span></button>
+      </div>
+      <div id="metrics" class="metrics"></div>
+      <div class="card">
+        <div class="section-heading">
+          <div><p class="eyebrow">RECENT ACTIVITY</p><h2>Generation history</h2></div>
+          <button class="secondary" id="refresh-dashboard">Refresh</button>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Run</th><th>Algorithm</th><th>Status</th><th>Created</th></tr></thead><tbody id="recent-runs"></tbody></table></div>
+      </div>
+      <p class="notice">Demonstration data is local sample data. A schedule is called valid only when every class is assigned and the independent validator reports complete hard-constraint coverage.</p>
+    </section>
+
+    <section class="view hidden" id="view-academic">
+      <div class="card">
+        <div class="section-heading">
+          <div><p class="eyebrow">RECORDS</p><h2>Academic data</h2></div>
+          <div class="toolbar">
+            <select id="resource-select" aria-label="Academic resource">
+              <option value="terms">Terms</option><option value="courses">Courses</option>
+              <option value="instructors">Instructors</option><option value="rooms">Rooms</option>
+              <option value="groups">Student groups</option><option value="timeslots">Timeslots</option>
+              <option value="classes">Classes</option>
+            </select>
+            <button class="secondary" id="refresh-resource">Refresh</button>
+            <button class="primary" id="add-record">Add record</button>
+          </div>
+        </div>
+        <div class="import-row">
+          <label class="file-button">Import CSV<input id="csv-file" type="file" accept=".csv,text/csv"></label>
+          <a id="csv-template" class="text-link" href="/api/templates/terms">Download CSV template</a>
+          <span class="muted">Imports are all-or-nothing; use the template for column names.</span>
+        </div>
+        <div class="table-wrap"><table><thead id="resource-head"></thead><tbody id="resource-rows"></tbody></table></div>
+        <p id="resource-count" class="muted"></p>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-schedule">
+      <div class="card">
+        <div class="section-heading">
+          <div><p class="eyebrow">CP-SAT SCHEDULING ENGINE</p><h2>Generate a schedule</h2></div>
+          <span class="badge">One worker · time-bounded</span>
+        </div>
+        <div class="form-row">
+          <label>Academic term<select id="term-select"></select></label>
+          <label>Time limit (seconds)<input id="time-limit" type="number" min="1" max="3600" value="30"></label>
+          <button id="run-solver" class="primary">Generate schedule</button>
+          <button id="cancel-job" class="danger hidden">Cancel run</button>
+        </div>
+        <div id="job-message" class="callout hidden"></div>
+      </div>
+      <div class="card">
+        <div class="section-heading">
+          <div><p class="eyebrow">VALIDATED OUTPUT</p><h2>Current timetable</h2></div>
+          <div class="toolbar"><button id="load-current" class="secondary">Load current schedule</button><div id="export-links"></div></div>
+        </div>
+        <div id="validation-summary"></div>
+        <div class="table-wrap"><table><thead><tr><th>Class</th><th>Room</th><th>Days</th><th>Start</th><th>Length</th><th>Weeks</th><th>Change placement</th></tr></thead><tbody id="schedule-rows"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-imports">
+      <div class="card">
+        <p class="eyebrow">BENCHMARK DATA</p><h2>Import an ITC 2019 XML instance</h2>
+        <p class="muted">The instance is parsed and stored for repeatable runs. Unsupported required constraints stop the solver; an unsupported run is not an infeasibility result.</p>
+        <div class="form-row">
+          <label>Dataset name<input id="dataset-name" value="Imported ITC dataset"></label>
+          <label class="file-button">Choose XML<input id="xml-file" type="file" accept=".xml,text/xml,application/xml"></label>
+          <button class="primary" id="import-xml">Validate and import XML</button>
+        </div>
+        <div id="import-message" class="callout hidden"></div>
+      </div>
+      <div class="card">
+        <p class="eyebrow">SAVED DATASETS</p><h2>Imported instances</h2>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Format</th><th>Imported</th><th></th></tr></thead><tbody id="dataset-rows"></tbody></table></div>
+      </div>
+      <div class="card subtle">
+        <p class="eyebrow">MODEL SCOPE</p>
+        <p>The local academic-data model supports time/room placement, explicit enrollment capacity checks, instructor conflicts, and shared student-group conflicts. The ITC parser has different information: actual sectioning is absent. The CP-SAT adapter currently rejects required MaxBreaks/MaxBlock and weighted soft distribution objectives it does not encode.</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="record-dialog">
+    <form id="record-form">
+      <div class="section-heading"><div><p class="eyebrow">ACADEMIC DATA</p><h2 id="dialog-title">Add record</h2></div><button type="button" class="icon-button" id="close-dialog" aria-label="Close">×</button></div>
+      <div id="record-fields" class="dialog-fields"></div>
+      <div class="dialog-actions"><button type="button" class="secondary" id="cancel-dialog">Cancel</button><button id="save-record" class="primary" type="submit">Save record</button></div>
+    </form>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

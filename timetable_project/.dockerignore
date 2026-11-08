@@ -1,0 +1,7 @@
+.venv/
+.venv-wsl/
+__pycache__/
+**/__pycache__/
+instance/
+results/
+.git/
